@@ -2,11 +2,17 @@
 *.exe
 *.exe~
 *.dll
-*.so
 *.dylib
+*.gz
+*.swp
+*.o
 
 # Test binary, build with `go test -c`
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+
+data/*
+dist/*
