@@ -54,6 +54,8 @@ if __name__ == '__main__':
     if not acclist:
         print("Have Not account in Account Server!")
         exit(1)
+
+    print ("AccRPC.ExportAcc",rpc.call("AccRPC.ExportAcc", {"addr":acclist[0],"path":"/tmp","pass1":"1234qwer","pass2":"1q2w3e4r"}))
     
     tsign=rpc.call("AccRPC.Sign", {"addr":acclist[0],"hash":"hashtext","pass":"1234qwer"})
     print ("AccRPC.Sign",tsign)

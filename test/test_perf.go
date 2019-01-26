@@ -17,27 +17,14 @@ func main() {
 	//gkeyA, err := core.MakeNewKey("123456789012345678901234567890123456789012345")
 	//gkeyB, err := core.MakeNewKey("098765432109876543210987654321098765432154321")
 
-	gkeyA, err := core.MakeNewKey(lib.GenerateRstring(45))
-	gkeyB, err := core.MakeNewKey(lib.GenerateRstring(45))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	privKeyA := gkeyA.GetPrivKey()
-	privKeyB := gkeyB.GetPrivKey()
-	fmt.Println("B privateKey is :", lib.ByteToString(privKeyA))
-	//fmt.Println("A privateKey is :",  hex.EncodeToString(privKeyA)) lib.ByteToString hex.EncodeToString 为等效功能函数
-	fmt.Println("B privateKey is :", lib.ByteToString(privKeyB))
-	pubKeyA := gkeyA.GetPubKey()
-	pubKeyB := gkeyB.GetPubKey()
-	fmt.Println("A publickKey is :", lib.ByteToString(pubKeyA))
-	fmt.Println("B publickKey is :", lib.ByteToString(pubKeyB))
+	randomstr:=lib.GenerateRstring(45)
+	acc:=*core.CreateAccount(randomstr)
+	addr := core.GetAddress(acc.GkeyA.GetPubKey())
 
-	acc := core.Account{gkeyA,gkeyB}
-	fmt.Println("账号转化地址为:",core.GetAddress(acc.GkeyA.GetPubKey()))
+	fmt.Println("账号转化地址为:",addr)
 	fmt.Println("==========================")
 	//隐私地址功能测试
-	shieldaddr, shieldpKey := core.CreateShieldAddr(&acc)
+	shieldaddr, shieldpKey := core.CreateShieldAddr(addr)
 	/*
 	s_1:=lib.ByteToString(shieldaddr)
 	s_1 = hex.EncodeToString(shieldaddr)
@@ -69,7 +56,7 @@ func main() {
 
 	priv := core.Getprivkey(&acc, shieldpKey)
 	text := []byte("hahahaha~!")
-	r, s, err := ecdsa.Sign(rand.Reader, priv, text)
+	r, s, _ := ecdsa.Sign(rand.Reader, priv, text)
 	if ecdsa.Verify(&priv.PublicKey, text, r, s) {
 		//println("The sign virify is succfully!")
 	}
@@ -120,7 +107,7 @@ func main() {
 	xpass, _ := lib.AesEncrypt(pass, aeskey)
 	pass64 := base64.StdEncoding.EncodeToString(xpass)
 	//fmt.Printf("加密后:%v\n",pass64)
-	bytesPass, err := base64.StdEncoding.DecodeString(pass64)
+	bytesPass, _ := base64.StdEncoding.DecodeString(pass64)
 
 	stat = int64(0)
 	now = time.Now().Unix()

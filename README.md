@@ -2,7 +2,7 @@
 # Author:yixuanzi
 # Data: 2018-12-28
 # Email: yeying0311@26.com
-# Version: 1.6.1
+# Version: 1.1.1
 
 ------
 # OverView

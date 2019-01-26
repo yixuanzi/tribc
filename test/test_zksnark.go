@@ -1,4 +1,4 @@
-package main
+ package main
 
 import (
 	"crypto/md5"
@@ -34,6 +34,9 @@ func (cm *Commit) GetApR() *big.Int{
 
 //计算返回R_i
 func (cm *Commit) GetR() []byte{
+	if(cm.Mount<0){
+		fmt.Println("This mount is less then 0!",cm.Mount)
+	}
 	bm:=new(big.Int).SetInt64(cm.Mount)
 	rs := BigAdd(cm.AddrV,cm.Rd,bm)
 	rsbyte := rs.Bytes()
@@ -119,9 +122,10 @@ func main()  {
 	fmt.Println("H3",H3)
 	fmt.Println("================================")
 	fmt.Println("Trias 业务下的测试验证样例。。。。。。")
+	//等式中包含负数时生成的R_i,H_i，X 能否适配当前trias下的计算约束 还为测试
 	U1:=Commit{"abcdefg",nil,100,nil}
-	U2:=Commit{"1112222",nil,80,nil}
-	U3:=Commit{"abcdefg",nil,20,nil}
+	U2:=Commit{"1112222",nil,50,nil}
+	U3:=Commit{"abcdefg",nil,50,nil}
 
 	U1.SetRa()
 	R1=U1.GetR()

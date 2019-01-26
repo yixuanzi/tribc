@@ -21,12 +21,13 @@ func PKCS5UnPadding(origData []byte) []byte {
 }
 
 //AES加密参数，定义为常亮
-var iv  = []byte("1234567887654321")
+//var iv  = []byte("1234567887654321")
 
 //aes加密
 func AesEncrypt(origData []byte, key []byte) ([]byte, error) {
 	//加密秘钥使用输入文本密码的md5
 	md5key:=md5.Sum(key)
+	iv:= md5key[:]
 
 	block, err := aes.NewCipher(md5key[:])
 	//block, err := aes.NewCipher(key)
@@ -47,6 +48,8 @@ func AesEncrypt(origData []byte, key []byte) ([]byte, error) {
 func AesDecrypt(crypted []byte, key []byte) ([]byte, error) {
 	defer handler()
 	md5key:=md5.Sum(key)
+	iv:= md5key[:]
+
 	block, err := aes.NewCipher(md5key[:])
 	if err != nil {
 		return nil, err

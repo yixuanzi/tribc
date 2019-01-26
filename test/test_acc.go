@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"tribc/core"
 	"tribc/lib"
@@ -16,27 +18,16 @@ func main() {
 	//gkeyA, err := core.MakeNewKey("123456789012345678901234567890123456789012345")
 	//gkeyB, err := core.MakeNewKey("098765432109876543210987654321098765432154321")
 
-	gkeyA, err := core.MakeNewKey(lib.GenerateRstring(45))
-	gkeyB, err := core.MakeNewKey(lib.GenerateRstring(45))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	privKeyA := gkeyA.GetPrivKey()
-	privKeyB := gkeyB.GetPrivKey()
-	fmt.Println("B privateKey is :", lib.ByteToString(privKeyA))
-	//fmt.Println("A privateKey is :",  hex.EncodeToString(privKeyA)) lib.ByteToString hex.EncodeToString 为等效功能函数
-	fmt.Println("B privateKey is :", lib.ByteToString(privKeyB))
-	pubKeyA := gkeyA.GetPubKey()
-	pubKeyB := gkeyB.GetPubKey()
-	fmt.Println("A publickKey is :", lib.ByteToString(pubKeyA))
-	fmt.Println("B publickKey is :", lib.ByteToString(pubKeyB))
+	randomstr:=lib.GenerateRstring(45)
+	acc:=*core.CreateAccount(randomstr)
 
-	acc := core.Account{gkeyA,gkeyB}
-	fmt.Println("账号转化地址为:",core.GetAddress(acc.GkeyA.GetPubKey()))
-	fmt.Println("==========================")
+	pubk_1:=acc.GkeyA.GetPubKey()
+	addr:=core.GetAddress(acc.GkeyA.GetPubKey())
+	fmt.Println("账号转化地址为:",addr)
+	pubk_2:=lib.Base58Decode(addr)
+	fmt.Println("==========================",bytes.Equal(pubk_1,pubk_2))
 	//隐私地址功能测试
-	shieldaddr, shieldpKey := core.CreateShieldAddr(&acc)
+	shieldaddr, shieldpKey := core.CreateShieldAddr(addr)
 	/*
 	s_1:=lib.ByteToString(shieldaddr)
 	s_1 = hex.EncodeToString(shieldaddr)
@@ -48,7 +39,7 @@ func main() {
 
 	//Virify(gkeyA,gkeyB,b_s_1,b_s_2)
 	if core.Verify_shield(&acc, shieldaddr, shieldpKey) {
-		println("The virify is succfully!")
+		fmt.Println("The virify is succfully!")
 	}
 
 	priv := core.Getprivkey(&acc, shieldpKey)
@@ -56,7 +47,7 @@ func main() {
 	r, s, err := ecdsa.Sign(rand.Reader, priv, text)
 
 	if ecdsa.Verify(&priv.PublicKey, text, r, s) {
-		println("The sign virify is succfully!")
+		fmt.Println("The sign virify is succfully!")
 	}
 
 	stext,_ := core.Sign(priv,text)
@@ -95,11 +86,12 @@ func main() {
 	fmt.Println("==========================")
 	//账号加密导出到文件
 	fmt.Println("正在导出账号文件..........")
-	af :=core.Account{gkeyA,gkeyB}
-	core.Save2file(&af,"/tmp/trias_acc.json",[]byte("1234qwer"))
+
+	core.Save2file(&acc,"/tmp/trias_acc.json",[]byte("1234qwer"))
 	fmt.Println("正在导入账号文件..........")
 	facc:= core.Load4file("/tmp/trias_acc.json",[]byte("1234qwer"))
-	fmt.Println(facc)
+	acc_byte,_:=json.Marshal(facc)
+	fmt.Println(string(acc_byte))
 
 
 

@@ -1,0 +1,124 @@
+<!doctype html>
+<!--
+Copyright 2018 The Go Authors. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+-->
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Go wasm-Trias account module with browse</title>
+</head>
+
+<body>
+	<script src="wasm_exec.js"></script>
+	<script>
+        triacc=new Object();  //必需在使用trias_wasm.wasm的页面进行triacc对象的初始化
+		if (!WebAssembly.instantiateStreaming) { // polyfill
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+		}
+
+		const go = new Go();
+		let mod, inst;
+		var rss,currentaddr,saddrpkey;
+		WebAssembly.instantiateStreaming(fetch("triacc_wasm.wasm"), go.importObject).then((result) => {
+			mod = result.module;
+			inst = result.instance;
+            go.run(inst);
+            alert("Load wasm file succ!")
+			//document.getElementById("runButton").disabled = false;
+		});
+		/*
+		async function Run() {
+			await go.run(inst);
+			inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
+		}*/
+
+        //triacc_wasm.wasm经过成功加载后，能够在triacc对象基础上初始化其中的功能函数
+        //各个功能函数的测试调用如下
+
+		function test() {
+			document.wasmtest("this is a wasm callback test",function (rs) {
+                console.log("callback return message: "+rs);
+			    alert(rs);
+            });
+        }
+
+        function CreateAcc() {
+            triacc.CreateAcc("1234qwer",function(rs){
+                console.log(rs)
+                rss=rs
+            })
+        }
+
+        function Load4Data() {
+		    triacc.Load4Data(rss,"1234qwer",function () {
+                console.log("load acc from data succ")
+            })
+        }
+
+        function GetCurrentAcc() {
+		    triacc.GetCurrentAcc(function (addr) {
+		        currentaddr=addr
+		        console.log(addr)
+            })
+        }
+
+        function DestoryCurrAcc() {
+		    triacc.DestoryCurrAcc()
+        }
+
+        function Sign(){
+		    triacc.Sign("test sign",function (sign_text) {
+                rss=JSON.parse(sign_text)
+		        console.log(sign_text)
+            })
+        }
+
+        function Verify(){
+            triacc.Verify(rss["Pubkey"],rss["Sigadata"],"test sign",function (rs) {
+                console.log(rs)
+            })
+        }
+
+        function CreateShieldAddr() {
+		    triacc.CreateShieldAddr(currentaddr,function (sdata) {
+		        saddrpkey=JSON.parse(sdata)
+		        console.log(saddrpkey)
+            })
+        }
+
+        function Verify_shield() {
+		    triacc.Verify_shield(saddrpkey['Shieldaddr'],saddrpkey['ShieldpKey'],function (rs) {
+		        console.log(rs)
+            })
+        }
+
+        function Shield_Sign() {
+		    triacc.Shield_Sign(saddrpkey['ShieldpKey'],"test sign",function (s_sign_text) {
+		        rss=JSON.parse(s_sign_text)
+                console.log(rss)
+            })
+        }
+
+	</script>
+	<!--
+	<button onClick="Run();" id="runButton" disabled>Run</button>
+	-->
+    <button onClick="test();" id="testButton" >Test</button>
+    <button onClick="CreateAcc();" id="testButton" >CreateAcc</button>
+    <button onClick="Load4Data();" id="testButton" >Load4Data</button>
+    <button onClick="GetCurrentAcc();" id="testButton" >GetCurrentAcc</button>
+    <button onClick="DestoryCurrAcc();" id="testButton" >DestoryCurrAcc</button>
+    <button onClick="Sign();" id="testButton" >Sign</button>
+    <button onClick="Verify();" id="testButton" >Verify</button>
+    <button onClick="CreateShieldAddr();" id="testButton" >CreateShieldAddr</button>
+    <button onClick="Verify_shield();" id="testButton" >Verify_shield</button>
+    <button onClick="Shield_Sign();" id="testButton" >Shield_Sign</button>
+</body>
+
+</html>

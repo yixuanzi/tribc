@@ -11,18 +11,25 @@ import (
 
 
 //创建隐私地址
-func CreateShieldAddr(acc *Account) ([]byte, []byte ) {
-	gkeyA := acc.GkeyA
-	gkeyB := acc.GkeyB
-
+func CreateShieldAddr(addr string) ([]byte, []byte ) {
+	//gkeyA := acc.GkeyA
+	//gkeyB := acc.GkeyB
+	pubk:=GetPubk4Addr(addr)
+	if pubk==nil{
+		return nil,nil
+	}
+	A_X:=pubk.X
+	A_Y:=pubk.Y
+	B_X:=pubk.X
+	B_Y:=pubk.Y
 	randomkey, _ := ecdsa.GenerateKey(curve, strings.NewReader(lib.GenerateRstring(45)))
 
 
-	P, _ := curve.ScalarMult(gkeyA.PublicKey.X, gkeyA.PublicKey.Y, randomkey.D.Bytes()) //Mr
+	P, _ := curve.ScalarMult(A_X, A_Y, randomkey.D.Bytes()) //Mr
 
 	x, y := curve.ScalarBaseMult(P.Bytes()) //(Mr)G
 
-	P, _ = curve.Add(x, y, gkeyB.PublicKey.X, gkeyB.PublicKey.Y) //(Mr)G+N
+	P, _ = curve.Add(x, y, B_X, B_Y) //(Mr)G+N
 
 	pubkey := append(randomkey.PublicKey.X.Bytes(),randomkey.PublicKey.Y.Bytes()...)
 	return P.Bytes(),pubkey
@@ -74,7 +81,4 @@ func Getprivkey(acc *Account, shieldpKey []byte) *ecdsa.PrivateKey {
 var curve = elliptic.P256() // 椭圆曲线参数,公共参数
 var N = curve.Params().N
 
-const (
-	version            = byte(0x01)
-	privKeyBytesLen    = 32
-)
+

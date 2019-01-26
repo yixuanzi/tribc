@@ -70,9 +70,15 @@ type Account struct {
 
 2. 返回当前账号列表:AccRPC.GetAcclist
 
-3. 导入账号:AccRPC.ImportAcc
+3. 导出账号:AccRPC.ExportAcc
     1. path:导入路径
     2. pass:解密密码
+
+3. 导入账号:AccRPC.ImportAcc
+	1. addr ：账号地址
+	2. path：导出账号文件夹路径，成功时将导出账号文件到 path/addr.json 
+	3. pass1：导出账号的授权验证密码，和加密密码一致
+	4. pass2:新的导入账号文件加密密码，当为空时，加密密码保持不变
 
 4. 生成签名:AccRPC.Sign
     1. addr:用户地址
@@ -109,3 +115,29 @@ tips:签名检查分两步：签名有效性检查，当前签名用户地址和
 ## RPC测试环境
 1. 192.168.1.200:9876
 2. 连接测试脚本 test/rpclinet.py (python3 下测试通过)
+
+# trias 账号模块wasm兼容
+## wasm 下的接口设计
+在成功加载wasm模块后，浏览器存在一个对象triacc,通过此对象可以有如下的接口调用
+
+1. triacc.CreateAcc() //p1:加密密码 p2:回调函数，并返回账号结果
+   - 创建账号，回调返回加密账户数据
+2. triacc.Load4Data() //p1:加密账号数据  p2:解密密码  p3:回调函数，并返回账号结果
+   - 根据输入的加密账户数据，回调返回加载的账号地址
+3. triacc.GetCurrentAcc() //p1:回调函数，并返回当前账号地址
+   - 回调返回当前操作账号地址
+4. triacc.Sign() //p1:需签名数据  p2:回调函数，并返回签名数据结构，包含公钥和签名数据
+   - 使用当前账号，对签名数据进行签名，回调返回已签名数据结构，包括公钥和签名后数据 
+5. triacc.Verify() //p1:公钥 p2:签名数据 p3:签名验证数据 p4:回调函数，返回验证结果
+   - 基于输入公钥和签名数据进行验证，返回签名验证结果
+6. triacc.CreateShieldAddr() //p1:用户对外地址 p2:回调函数，返回隐私地址相关数据
+   - 基于输入账户地址，回调返回隐私地址数据结构，包括隐私地址和匹配机密随机数
+7. triacc.Verify_shield() //p1:shieldaddr p2:shieldpkey p3:回调函数，返回判断状态
+   - 使用当前账号，基于输入的隐私地址，机密随机数，回调返回判断当前隐私地址是否是当前账号拥有的
+8. triacc.Shield_Sign() //p1:shieldpkey p2:需要签名数据 p3:回调函数，返回签名数据结构
+   - 基于当前账号，基于输入机密随机数，对隐私地址花费数据进行签名，回调返回签名数据结构
+
+## wasm 测试和triascc功能接口测试
+1. 执行buildwasm.sh triacc_wasm 编译生成triacc_wasm.wasm(要求>=go 1.11.0，默认已提供编译完成的wasm文件)
+2. 执行http.go 打开server服务器
+3. 使用浏览器访问 localhost:8080/wasm_exec.html，点击其中的按钮进行功能测试，打开console查看调试信息

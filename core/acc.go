@@ -6,13 +6,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/md5"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/ripemd160"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -24,6 +22,10 @@ import (
   author: Guo Guisheng
   本文件主要完成了对账号结构的定义，并实现了针对账号交互的关键操作
  */
+
+const (
+	version            = "1.1"
+)
 
 //密钥对结构
 type GKey struct {
@@ -51,6 +53,29 @@ func MakeNewKey(randKey string) (*GKey, error) {
 	return &gkey, nil
 }
 
+
+//创建账号，根据当前的设计业务设计，所有新建的account都需要通过调用此函数进行生成，否则此账号对象在签名验证过程中会有错误（本质上通过调用此函数，实现GkeyA,GkeyB一致）
+func CreateAccount(randomstr string) *Account{
+	gkeyA, err := MakeNewKey(randomstr)
+	gkeyB, err := MakeNewKey(randomstr)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	privKeyA := gkeyA.GetPrivKey()
+	privKeyB := gkeyB.GetPrivKey()
+	fmt.Println("A privateKey is :", lib.ByteToString(privKeyA))
+	//fmt.Println("A privateKey is :",  hex.EncodeToString(privKeyA)) lib.ByteToString hex.EncodeToString 为等效功能函数
+	fmt.Println("B privateKey is :", lib.ByteToString(privKeyB))
+	pubKeyA := gkeyA.GetPubKey()
+	pubKeyB := gkeyB.GetPubKey()
+	fmt.Println("A publickKey is :", lib.ByteToString(pubKeyA))
+	fmt.Println("B publickKey is :", lib.ByteToString(pubKeyB))
+
+	acc := Account{gkeyA,gkeyB}
+	return &acc
+}
+
 //根据私钥byte获得gkey
 func Priv2gkey(priv_s []byte) *GKey  {
 	priv := new(ecdsa.PrivateKey)
@@ -61,19 +86,22 @@ func Priv2gkey(priv_s []byte) *GKey  {
 	return &gkey
 }
 
-//根据公钥字符串获得一个公钥对象
+//根据公钥字节串获得一个公钥对象
 func Pub2pubKey(pub_b []byte) *ecdsa.PublicKey{
 	//pub_b,_:=hex.DecodeString(s)
-	pubkey:=ecdsa.PublicKey{curve,new(big.Int).SetBytes(pub_b[:32]),new(big.Int).SetBytes(pub_b[32:])}
-	return &pubkey
+	if len(pub_b)==64{
+		pubkey:=ecdsa.PublicKey{curve,new(big.Int).SetBytes(pub_b[:32]),new(big.Int).SetBytes(pub_b[32:])}
+		return &pubkey
+	}
+	return nil
 }
 
 
 //根据公钥对，返回私钥byte
 func (k GKey) GetPrivKey() []byte {
 	d := k.PrivateKey.D.Bytes()
-	b := make([]byte, 0, privKeyBytesLen)
-	priKey := lib.PaddedAppend(privKeyBytesLen, b, d) // []bytes type
+	b := make([]byte, 0, 32)
+	priKey := lib.PaddedAppend(32, b, d) // []bytes type
 	// s := byteToString(priKey)
 	return priKey
 }
@@ -87,10 +115,9 @@ func (k GKey) GetPubKey() []byte {
 
 //根据隐私地址账户获得用户操作地址 （若不适用隐私地址的双层公私钥账户，可自定义修改实现
 func GetAddress(pub_bytes []byte) (address string) {
-	/* SHA256 HASH */
+	/*
+	// SHA256 HASH
 	//fmt.Println("1 - Perform SHA-256 hashing on the public key")
-
-
 	sha256_h := sha256.New()
 	sha256_h.Reset()
 	sha256_h.Write(pub_bytes)
@@ -98,20 +125,27 @@ func GetAddress(pub_bytes []byte) (address string) {
 	//fmt.Println(lib.ByteToString(pub_hash_1))
 	//fmt.Println("================")
 
-	/* RIPEMD-160 HASH */
+	// RIPEMD-160 HASH
 	//fmt.Println("2 - Perform RIPEMD-160 hashing on the result of SHA-256")
 	ripemd160_h := ripemd160.New()
 	ripemd160_h.Reset()
 	ripemd160_h.Write(pub_hash_1)
 	pub_hash_2 := ripemd160_h.Sum(nil) // 对公钥hash进行ripemd160运算
+	*/
 	//fmt.Println(lib.ByteToString(pub_hash_2))
 	//fmt.Println("================")
 	/* Convert hash bytes to base58 chech encoded sequence */
 	//address = lib.B58checkencode(0x00, pub_hash_2)
 
-	return lib.B58encode(pub_hash_2)
+	return lib.B58encode(pub_bytes)
 }
 
+//根据地址返回公钥对象
+func GetPubk4Addr(addr string) *ecdsa.PublicKey{
+	pub_b:=lib.Base58Decode(addr)
+	pub:=Pub2pubKey(pub_b)
+	return pub
+}
 
 /*
 对数据进行签名，其中hash为需要签名数据的哈希
@@ -210,7 +244,7 @@ type Accfile struct {
 //保存账号到文件，采用加密方式保存{a:{privhash:hash(acc_a),privaes:aes(acc_a)},b:{privhash:hash(acc_b),privaes:aes(acc_b)}
 func Save2file(acc *Account,path string,key []byte) bool{
 	var af Accfile
-	af.V="1.0"
+	af.V=version
 	priv_a := acc.GkeyA.GetPrivKey()
 	priv_b := acc.GkeyB.GetPrivKey()
 	md5key:=md5.Sum(priv_a)
@@ -230,6 +264,8 @@ func Save2file(acc *Account,path string,key []byte) bool{
 		return false
 	}
 	af.B.Privaes=base64.StdEncoding.EncodeToString(xpass)
+	af.Name=GetAddress(acc.GkeyA.GetPubKey())
+
 	data,_:= json.Marshal(af)
 	if ioutil.WriteFile(path,data,0644)==nil{
 		fmt.Println("[Info Save2file]","写入账号文件成功",path)
@@ -268,4 +304,19 @@ func entry2gkey(aa * AccAes,key []byte) (*GKey,error) {
 		return Priv2gkey(priv),nil
 	}
 	return nil,errors.New("密码错误")
+}
+
+
+//根据公钥返回地址，用于在区块链中检验当前签名是否是当前地址的签名（签名检查分两步：签名有效性检查，当前签名用户地址和当前资产地址检查）
+func Pubkey2Addr(puk_s string)string{
+	pub_b,_:= hex.DecodeString(puk_s)
+	result:=GetAddress(pub_b)
+	return result
+}
+
+//根据公钥返回地址(仅用于隐私交易下隐藏地址交易转化），用于在区块链中检验当前签名是否是当前地址的签名
+func Shield_Pubkey2Addr(s_puk_s string)string{
+	pub_b,_:= hex.DecodeString(s_puk_s)
+	result:=hex.EncodeToString(pub_b[:32])
+	return result
 }

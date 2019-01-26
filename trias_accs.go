@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net"
 	"net/rpc"
@@ -20,7 +19,7 @@ type AAccount struct {
 	Pass string
 }
 
-const version  = "1.6.2"
+const version  = "1.7.2"
 var AccM map[string]AAccount = map[string]AAccount{}
 
 func main() {
@@ -81,24 +80,11 @@ type CAargs struct {
 func (self *AccRPC) CreateAcc(args CAargs, result * string)error{
 	log.Println(args)
 	defer handlerError("CreateAcc")
-	gkeyA, err := core.MakeNewKey(lib.GenerateRstring(45))
-	gkeyB, err := core.MakeNewKey(lib.GenerateRstring(45))
-	if err != nil {
-		log.Println(err)
-		*result="Fail"
-		return err
-	}
-	privKeyA := gkeyA.GetPrivKey()
-	privKeyB := gkeyB.GetPrivKey()
-	fmt.Println("B privateKey is :", lib.ByteToString(privKeyA))
-	fmt.Println("B privateKey is :", lib.ByteToString(privKeyB))
-	pubKeyA := gkeyA.GetPubKey()
-	pubKeyB := gkeyB.GetPubKey()
-	fmt.Println("A publickKey is :", lib.ByteToString(pubKeyA))
-	fmt.Println("B publickKey is :", lib.ByteToString(pubKeyB))
 
-	acc := core.Account{gkeyA,gkeyB}
+	randomstr:=lib.GenerateRstring(45)
+	acc:=*core.CreateAccount(randomstr)
 	addr := core.GetAddress(acc.GkeyA.GetPubKey())
+
 	aacc := AAccount{&acc,args.Pass}
 	if _,ok := AccM[addr]; !ok{
 		AccM[addr]=aacc
@@ -145,6 +131,33 @@ func (self *AccRPC) ImportAcc(args IAargs,result *string) error{
 	return nil
 }
 
+type EAargs struct {
+	Addr string `json:addr`
+	Path string `json:path`
+	Pass1 string `json:pass1`
+	Pass2 string `json:pass2`
+}
+func (self *AccRPC) ExportAcc (args EAargs,result *string) error{
+	log.Println(args)
+	defer handlerError("ExportAcc")
+	if aacc,ok := AccM[args.Addr];ok{
+		if aacc.Pass==args.Pass1{
+			path:=args.Path+"/"+args.Addr+".json" //拼接形成导出账号文件路径
+			pass:=args.Pass2 //支持传递参数修改导出账号文件密码
+			if len(pass)==0{
+				pass=args.Pass1
+			}
+			if core.Save2file(aacc.Acc,path,[]byte(pass)){
+				*result=path
+				return nil
+			}
+		}
+
+	}
+	*result="Fail"
+	return nil
+}
+
 //===================================
 type Sargs struct {
 	Addr string `json:addr`
@@ -176,8 +189,8 @@ func (self *AccRPC)Verify(args Vargs,result *string)error  {
 	log.Println(args)
 	defer handlerError("Verify")
 	pub_b,_:= hex.DecodeString(args.Pubkey)
-	priv:= core.Pub2pubKey(pub_b) //当前公钥数据未解码
-	f,err:=core.Verify([]byte(args.Hash),args.Stext,priv)
+	pubk:= core.Pub2pubKey(pub_b) //当前公钥数据未解码
+	f,err:=core.Verify([]byte(args.Hash),args.Stext,pubk)
 	if f{
 		*result="OK"
 		return nil
@@ -193,12 +206,11 @@ type RepCSA struct {
 func (self *AccRPC)CreateShieldAddr(args string,result *RepCSA) error{
 	log.Println(args)
 	defer handlerError("CreateShieldAddr")
-	if aacc,ok:= AccM[args];ok {
-		acc:=aacc.Acc
-		shieldaddr, shieldpKey := core.CreateShieldAddr(acc)
-		*result=RepCSA{hex.EncodeToString(shieldaddr),hex.EncodeToString(shieldpKey)}
-	}else{
+	shieldaddr, shieldpKey := core.CreateShieldAddr(args)
+	if shieldpKey==nil{
 		*result=RepCSA{"",""}
+	}else{
+		*result=RepCSA{hex.EncodeToString(shieldaddr),hex.EncodeToString(shieldpKey)}
 	}
 	return nil
 }
@@ -256,8 +268,7 @@ func (self *AccRPC)Shield_Sign(args SSargs,result *inc.TSign)error{
 func (self *AccRPC)Pubkey2Addr(args string,result *string)error{
 	log.Println(args)
 	defer handlerError("Pubkey2Addr")
-	pub_b,_:= hex.DecodeString(args)
-	*result=core.GetAddress(pub_b)
+	*result=core.Pubkey2Addr(args)
 	return nil
 }
 
@@ -265,8 +276,7 @@ func (self *AccRPC)Pubkey2Addr(args string,result *string)error{
 func (self *AccRPC)Shield_Pubkey2Addr(args string,result *string)error{
 	log.Println(args)
 	defer handlerError("Shield_Pubkey2Addr")
-	pub_b,_:= hex.DecodeString(args)
-	*result=hex.EncodeToString(pub_b[:32])
+	*result=core.Shield_Pubkey2Addr(args)
 	return nil
 }
 
