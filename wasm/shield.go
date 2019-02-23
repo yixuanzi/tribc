@@ -76,7 +76,6 @@ func Getprivkey(acc *Account, shieldpKey []byte) *ecdsa.PrivateKey {
 }
 
 
-
 var curve = elliptic.P256() // 椭圆曲线参数,公共参数
 var N = curve.Params().N
 

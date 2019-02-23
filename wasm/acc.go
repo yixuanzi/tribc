@@ -318,3 +318,12 @@ func Shield_Pubkey2Addr(s_puk_s string)string{
 	result:=hex.EncodeToString(pub_b[:32])
 	return result
 }
+
+//根据私钥A构造一个账户对象
+func GetAcc4privA(privA string) *Account{
+	privA_b,_ := hex.DecodeString(privA)
+	privA_org,_ := AesDecrypt(privA_b,[]byte("tribc"))
+	gkeyA := Priv2gkey(privA_org)
+	acc := Account{gkeyA,gkeyA} //当前gkeyA,gkeyB一致
+	return &acc
+}

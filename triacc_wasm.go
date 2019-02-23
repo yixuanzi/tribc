@@ -118,6 +118,19 @@ func main() {
 		}
 	}
 
+	Verify_shield2 := func(i []js.Value){ //p1:私钥A p2:shieldaddr p3:shieldpkey p4:回调函数，返回判断状态
+		handlerError("Verify_shield")
+		acc_new := wasm.GetAcc4privA(i[0].String())
+		saddr, _ := hex.DecodeString(i[1].String())
+		spkey, _ := hex.DecodeString(i[2].String())
+
+		if wasm.Verify_shield(acc_new, saddr, spkey) {
+			i[3].Invoke(js.ValueOf("OK"))
+		} else {
+			i[3].Invoke(js.ValueOf("Fail"))
+		}
+	}
+
 
 	Shield_Sign := func(i []js.Value){ //p1:shieldpkey p2:需要签名数据 p3:回调函数，返回签名数据结构
 		handlerError("Shield_Sign")
@@ -134,6 +147,18 @@ func main() {
 		}
 	}
 
+	GetPrivkeyA := func(i []js.Value){ //p1:回调函数，返回私钥A
+		handlerError("GetPrivkeyA")
+		if acc != nil{
+			privA := acc.GkeyA.GetPrivKey()
+			privA_aes,_ := wasm.AesEncrypt(privA,[]byte("tribc"))
+			privA_hex := hex.EncodeToString(privA_aes)
+			i[0].Invoke(js.ValueOf(privA_hex))
+		}else{
+			i[0].Invoke(js.ValueOf("Fail"))
+		}
+	}
+
 
 	//为对应的triacc函数调用做映射
 	triacc.Set("CreateAcc", js.NewCallback(CreateAcc))
@@ -144,7 +169,9 @@ func main() {
 	triacc.Set("Verify", js.NewCallback(Verify))
 	triacc.Set("CreateShieldAddr", js.NewCallback(CreateShieldAddr))
 	triacc.Set("Verify_shield", js.NewCallback(Verify_shield))
+	triacc.Set("Verify_shield2", js.NewCallback(Verify_shield2))
 	triacc.Set("Shield_Sign", js.NewCallback(Shield_Sign))
+	triacc.Set("GetPrivkeyA", js.NewCallback(GetPrivkeyA))
 	<-c
 }
 

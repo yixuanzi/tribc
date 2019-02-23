@@ -105,6 +105,19 @@ license that can be found in the LICENSE file.
             })
         }
 
+        function GetPrivkeyA(){
+		    triacc.GetPrivkeyA(function (privA) {
+		        rss=privA
+                console.log(rss)
+            })
+        }
+
+        function Verify_shield2() {
+		    triacc.Verify_shield2(rss,saddrpkey['Shieldaddr'],saddrpkey['ShieldpKey'],function (rs) {
+                console.log(rs)
+            })
+        }
+
 	</script>
 	<!--
 	<button onClick="Run();" id="runButton" disabled>Run</button>
@@ -119,6 +132,8 @@ license that can be found in the LICENSE file.
     <button onClick="CreateShieldAddr();" id="testButton" >CreateShieldAddr</button>
     <button onClick="Verify_shield();" id="testButton" >Verify_shield</button>
     <button onClick="Shield_Sign();" id="testButton" >Shield_Sign</button>
+    <button onClick="GetPrivkeyA();" id="testButton" >GetPrivkeyA</button>
+    <button onClick="Verify_shield2();" id="testButton" >Verify_shield2</button>
 </body>
 
 </html>
