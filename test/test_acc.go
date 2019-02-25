@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"encoding/base64"
@@ -18,14 +17,12 @@ func main() {
 	//gkeyA, err := core.MakeNewKey("123456789012345678901234567890123456789012345")
 	//gkeyB, err := core.MakeNewKey("098765432109876543210987654321098765432154321")
 
-	randomstr:=lib.GenerateRstring(45)
-	acc:=*core.CreateAccount(randomstr)
 
-	pubk_1:=acc.GkeyA.GetPubKey()
-	addr:=core.GetAddress(acc.GkeyA.GetPubKey())
+	acc:=*core.CreateAccount()
+	addr:=core.GetAddress(acc.GkeyA.GetPubKey(),acc.GkeyB.GetPubKey())
 	fmt.Println("账号转化地址为:",addr)
-	pubk_2:=lib.Base58Decode(addr)
-	fmt.Println("==========================",bytes.Equal(pubk_1,pubk_2))
+
+	fmt.Println("==========================")
 	//隐私地址功能测试
 	shieldaddr, shieldpKey := core.CreateShieldAddr(addr)
 	/*

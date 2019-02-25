@@ -1,4 +1,4 @@
-package core
+package fund
 
 import (
 	"crypto/sha256"

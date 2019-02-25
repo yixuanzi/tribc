@@ -10,7 +10,6 @@ import (
 	"runtime/debug"
 	"tribc/core"
 	"tribc/inc"
-	"tribc/lib"
 )
 
 
@@ -19,7 +18,7 @@ type AAccount struct {
 	Pass string
 }
 
-const version  = "1.7.2"
+const version  = "1.8.0"
 var AccM map[string]AAccount = map[string]AAccount{}
 
 func main() {
@@ -81,9 +80,8 @@ func (self *AccRPC) CreateAcc(args CAargs, result * string)error{
 	log.Println(args)
 	defer handlerError("CreateAcc")
 
-	randomstr:=lib.GenerateRstring(45)
-	acc:=*core.CreateAccount(randomstr)
-	addr := core.GetAddress(acc.GkeyA.GetPubKey())
+	acc:=*core.CreateAccount()
+	addr := core.GetAddress(acc.GkeyA.GetPubKey(),acc.GkeyB.GetPubKey())
 
 	aacc := AAccount{&acc,args.Pass}
 	if _,ok := AccM[addr]; !ok{
@@ -117,7 +115,7 @@ func (self *AccRPC) ImportAcc(args IAargs,result *string) error{
 	defer handlerError("ImportAcc")
 	acc:= core.Load4file(args.Path,[]byte(args.Pass))
 	if acc!=nil{
-		addr := core.GetAddress(acc.GkeyA.GetPubKey())
+		addr := core.GetAddress(acc.GkeyA.GetPubKey(),acc.GkeyB.GetPubKey())
 		aacc := AAccount{acc,args.Pass}
 		if _,ok := AccM[addr];ok{
 			*result="The Acc is exist!"
@@ -169,8 +167,8 @@ func (self *AccRPC)Sign(args Sargs,result *inc.TSign) error{
 	defer handlerError("Sign")
 	if aacc,ok:= AccM[args.Addr];ok{
 		if args.Pass==aacc.Pass{
-			signdata,_:= core.Sign(aacc.Acc.GkeyA.PrivateKey,[]byte(args.Hash))
-			tsign:=inc.TSign{hex.EncodeToString(aacc.Acc.GkeyA.GetPubKey()),signdata}
+			signdata,_:= core.Sign(aacc.Acc.GkeyB.PrivateKey,[]byte(args.Hash))
+			tsign:=inc.TSign{hex.EncodeToString(aacc.Acc.GkeyB.GetPubKey()),signdata}
 			*result=tsign
 			return nil
 		}
@@ -264,11 +262,13 @@ func (self *AccRPC)Shield_Sign(args SSargs,result *inc.TSign)error{
 	return nil
 }
 
-//根据公钥返回地址，用于在区块链中检验当前签名是否是当前地址的签名（签名检查分两步：签名有效性检查，当前签名用户地址和当前资产地址检查）
-func (self *AccRPC)Pubkey2Addr(args string,result *string)error{
+//根据地址返回验证公钥B，用于在区块链中检验当前签名是否是当前地址的签名（签名检查分两步：签名有效性检查，当前签名用户地址和当前资产地址检查;使用账户地址返回当前账户公钥B，和当前签名的公钥进行匹配，完成所有权验证）
+func (self *AccRPC)GetACCPubkB(args string,result *string)error{
 	log.Println(args)
-	defer handlerError("Pubkey2Addr")
-	*result=core.Pubkey2Addr(args)
+	defer handlerError("GetACCPubkB")
+	_,pubB := core.GetPubk4Addr(args)
+	pubB_b := append(pubB.X.Bytes(), pubB.Y.Bytes()...)
+	*result = hex.EncodeToString(pubB_b)
 	return nil
 }
 

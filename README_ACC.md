@@ -1,6 +1,6 @@
 # Name: Trias Account Moudel(TAM)
-# Data: 2018-12-27
-# Version: 1.7.3
+# Data: 2019-02-25
+# Version: 1.8.0
 # Author: Guo Guisheng (Trias lab)
 
 -------

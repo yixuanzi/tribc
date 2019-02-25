@@ -14,14 +14,12 @@ import (
 func CreateShieldAddr(addr string) ([]byte, []byte ) {
 	//gkeyA := acc.GkeyA
 	//gkeyB := acc.GkeyB
-	pubk:=GetPubk4Addr(addr)
-	if pubk==nil{
-		return nil,nil
-	}
-	A_X:=pubk.X
-	A_Y:=pubk.Y
-	B_X:=pubk.X
-	B_Y:=pubk.Y
+	pubA,pubB:=GetPubk4Addr(addr)
+
+	A_X:=pubA.X
+	A_Y:=pubA.Y
+	B_X:=pubB.X
+	B_Y:=pubB.Y
 	randomkey, _ := ecdsa.GenerateKey(curve, strings.NewReader(lib.GenerateRstring(45)))
 
 

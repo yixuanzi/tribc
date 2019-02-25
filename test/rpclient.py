@@ -69,6 +69,6 @@ if __name__ == '__main__':
     print ("AccRPC.Verify",rpc.call("AccRPC.Verify", {"pubkey":stsign['Pubkey'],"hash":"hashtext","stext":stsign['Sigadata']}))
     
     print("==========================")
-    print ("AccRPC.Pubkey2Addr",rpc.call("AccRPC.Pubkey2Addr", tsign['Pubkey']))
+    print ("AccRPC.GetACCPubkB",rpc.call("AccRPC.GetACCPubkB", acclist[0]))
     print ("AccRPC.Shield_Pubkey2Addr",rpc.call("AccRPC.Shield_Pubkey2Addr", stsign['Pubkey']))
     

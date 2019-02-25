@@ -57,7 +57,7 @@ func main() {
 	GetCurrentAcc:=func(i []js.Value){  //p1:回调函数，并返回当前账号地址
 		handlerError("GetCurrentAcc")
 		if acc!=nil{
-			addr:=wasm.GetAddress(acc.GkeyA.GetPubKey())
+			addr:=wasm.GetAddress(acc.GkeyA.GetPubKey(),acc.GkeyB.GetPubKey())
 			i[0].Invoke(js.ValueOf(addr))
 		}else{
 			i[0].Invoke(js.ValueOf("NULL"))
@@ -72,8 +72,8 @@ func main() {
 	Sign:=func(i []js.Value){ //p1:需签名数据  p2:回调函数，并返回签名数据结构，包含公钥和签名数据
 		handlerError("Sign")
 		if acc!=nil{
-			signdata,_:= wasm.Sign(acc.GkeyA.PrivateKey,[]byte(i[0].String()))
-			tsign:=wasm.TSign{hex.EncodeToString(acc.GkeyA.GetPubKey()),signdata}
+			signdata,_:= wasm.Sign(acc.GkeyB.PrivateKey,[]byte(i[0].String()))
+			tsign:=wasm.TSign{hex.EncodeToString(acc.GkeyB.GetPubKey()),signdata}
 			rs,_:=json.Marshal(tsign)
 			i[1].Invoke(js.ValueOf(string(rs)))
 		}else{
@@ -118,16 +118,16 @@ func main() {
 		}
 	}
 
-	Verify_shield2 := func(i []js.Value){ //p1:私钥A p2:shieldaddr p3:shieldpkey p4:回调函数，返回判断状态
+	Verify_shield2 := func(i []js.Value){ //p1:私钥A p2:账户地址 p3:shieldaddr p4:shieldpkey p5:回调函数，返回判断状态
 		handlerError("Verify_shield")
-		acc_new := wasm.GetAcc4privA(i[0].String())
-		saddr, _ := hex.DecodeString(i[1].String())
-		spkey, _ := hex.DecodeString(i[2].String())
+		acc_new := wasm.GetAcc4privA(i[0].String(),i[1].String())
+		saddr, _ := hex.DecodeString(i[2].String())
+		spkey, _ := hex.DecodeString(i[3].String())
 
 		if wasm.Verify_shield(acc_new, saddr, spkey) {
-			i[3].Invoke(js.ValueOf("OK"))
+			i[4].Invoke(js.ValueOf("OK"))
 		} else {
-			i[3].Invoke(js.ValueOf("Fail"))
+			i[4].Invoke(js.ValueOf("Fail"))
 		}
 	}
 

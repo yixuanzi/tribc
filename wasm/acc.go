@@ -53,9 +53,11 @@ func MakeNewKey(randKey string) (*GKey, error) {
 
 
 //创建账号，根据当前的设计业务设计，所有新建的account都需要通过调用此函数进行生成，否则此账号对象在签名验证过程中会有错误（本质上通过调用此函数，实现GkeyA,GkeyB一致）
-func CreateAccount(randomstr string) *Account{
-	gkeyA, err := MakeNewKey(randomstr)
-	gkeyB, err := MakeNewKey(randomstr)
+func CreateAccount() *Account{
+	randomstrA:= GenerateRstring(45)
+	randomstrB:= GenerateRstring(45)
+	gkeyA, err := MakeNewKey(randomstrA)
+	gkeyB, err := MakeNewKey(randomstrB)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -112,7 +114,7 @@ func (k GKey) GetPubKey() []byte {
 }
 
 //根据隐私地址账户获得用户操作地址 （若不适用隐私地址的双层公私钥账户，可自定义修改实现
-func GetAddress(pub_bytes []byte) (address string) {
+func GetAddress(pubA_bytes []byte,pubB_bytes []byte) (address string) {
 	/*
 	// SHA256 HASH
 	//fmt.Println("1 - Perform SHA-256 hashing on the public key")
@@ -135,14 +137,16 @@ func GetAddress(pub_bytes []byte) (address string) {
 	/* Convert hash bytes to base58 chech encoded sequence */
 	//address = lib.B58checkencode(0x00, pub_hash_2)
 
-	return B58encode(pub_bytes)
+	pubAB_bytes := append(pubA_bytes, pubB_bytes...)
+	return B58encode(pubAB_bytes)
 }
 
 //根据地址返回公钥对象
-func GetPubk4Addr(addr string) *ecdsa.PublicKey{
+func GetPubk4Addr(addr string)(*ecdsa.PublicKey,*ecdsa.PublicKey) {
 	pub_b:=Base58Decode(addr)
-	pub:=Pub2pubKey(pub_b)
-	return pub
+	pub_A:=Pub2pubKey(pub_b[:64])
+	pub_B:=Pub2pubKey(pub_b[64:])
+	return pub_A,pub_B
 }
 
 /*
@@ -241,8 +245,7 @@ type Accfile struct {
 
 //保存账号到文件，采用加密方式保存{a:{privhash:hash(acc_a),privaes:aes(acc_a)},b:{privhash:hash(acc_b),privaes:aes(acc_b)}
 func CreateAcc(key []byte) string{
-	randomstr:= GenerateRstring(45)
-	acc := CreateAccount(randomstr)
+	acc := CreateAccount()
 	var af Accfile
 	af.V=version
 	priv_a := acc.GkeyA.GetPrivKey()
@@ -264,7 +267,7 @@ func CreateAcc(key []byte) string{
 		return "Fail"
 	}
 	af.B.Privaes=base64.StdEncoding.EncodeToString(xpass)
-	af.Name=GetAddress(acc.GkeyA.GetPubKey())
+	af.Name=GetAddress(acc.GkeyA.GetPubKey(),acc.GkeyB.GetPubKey())
 
 	data,_:= json.Marshal(af)
 
@@ -304,13 +307,13 @@ func entry2gkey(aa * AccAes,key []byte) (*GKey,error) {
 	return nil,errors.New("密码错误")
 }
 
-
+/*
 //根据公钥返回地址，用于在区块链中检验当前签名是否是当前地址的签名（签名检查分两步：签名有效性检查，当前签名用户地址和当前资产地址检查）
 func Pubkey2Addr(puk_s string)string{
 	pub_b,_:= hex.DecodeString(puk_s)
 	result:=GetAddress(pub_b)
 	return result
-}
+}*/
 
 //根据公钥返回地址(仅用于隐私交易下隐藏地址交易转化），用于在区块链中检验当前签名是否是当前地址的签名
 func Shield_Pubkey2Addr(s_puk_s string)string{
@@ -319,11 +322,15 @@ func Shield_Pubkey2Addr(s_puk_s string)string{
 	return result
 }
 
-//根据私钥A构造一个账户对象
-func GetAcc4privA(privA string) *Account{
+//根据私钥A和账户地址 构造一个缺乏足量数据的账户对象
+func GetAcc4privA(privA string,addr string) *Account{
 	privA_b,_ := hex.DecodeString(privA)
 	privA_org,_ := AesDecrypt(privA_b,[]byte("tribc"))
 	gkeyA := Priv2gkey(privA_org)
-	acc := Account{gkeyA,gkeyA} //当前gkeyA,gkeyB一致
+
+	_,pubB:=GetPubk4Addr(addr)
+	gkeyB := GKey{nil,*pubB} //B钥对在进行隐私地址验证时无需B私钥
+
+	acc := Account{gkeyA,&gkeyB}
 	return &acc
 }

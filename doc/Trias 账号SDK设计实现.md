@@ -104,7 +104,7 @@ type Account struct {
     3. hash：签名hash
     4. shieldpkey：隐私交易随机数
 
-9. 由公钥到地址:AccRPC.Pubkey2Addr
+9. 由地址返回公钥B:AccRPC.GetACCPubkB
     1. 公钥字符串
 
 10. 由隐私地址公钥到地址:AccRPC.Shield_Pubkey2Addr

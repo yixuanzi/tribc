@@ -55,9 +55,11 @@ func MakeNewKey(randKey string) (*GKey, error) {
 
 
 //创建账号，根据当前的设计业务设计，所有新建的account都需要通过调用此函数进行生成，否则此账号对象在签名验证过程中会有错误（本质上通过调用此函数，实现GkeyA,GkeyB一致）
-func CreateAccount(randomstr string) *Account{
-	gkeyA, err := MakeNewKey(randomstr)
-	gkeyB, err := MakeNewKey(randomstr)
+func CreateAccount() *Account{
+	randomstrA:= lib.GenerateRstring(45)
+	randomstrB:= lib.GenerateRstring(45)
+	gkeyA, err := MakeNewKey(randomstrA)
+	gkeyB, err := MakeNewKey(randomstrB)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -114,7 +116,7 @@ func (k GKey) GetPubKey() []byte {
 }
 
 //根据隐私地址账户获得用户操作地址 （若不适用隐私地址的双层公私钥账户，可自定义修改实现
-func GetAddress(pub_bytes []byte) (address string) {
+func GetAddress(pubA_bytes []byte,pubB_bytes []byte) (address string) {
 	/*
 	// SHA256 HASH
 	//fmt.Println("1 - Perform SHA-256 hashing on the public key")
@@ -137,14 +139,16 @@ func GetAddress(pub_bytes []byte) (address string) {
 	/* Convert hash bytes to base58 chech encoded sequence */
 	//address = lib.B58checkencode(0x00, pub_hash_2)
 
-	return lib.B58encode(pub_bytes)
+	pubAB_bytes := append(pubA_bytes, pubB_bytes...)
+	return lib.B58encode(pubAB_bytes)
 }
 
 //根据地址返回公钥对象
-func GetPubk4Addr(addr string) *ecdsa.PublicKey{
+func GetPubk4Addr(addr string) (*ecdsa.PublicKey,*ecdsa.PublicKey){
 	pub_b:=lib.Base58Decode(addr)
-	pub:=Pub2pubKey(pub_b)
-	return pub
+	pub_A:=Pub2pubKey(pub_b[:64])
+	pub_B:=Pub2pubKey(pub_b[64:])
+	return pub_A,pub_B
 }
 
 /*
@@ -264,7 +268,7 @@ func Save2file(acc *Account,path string,key []byte) bool{
 		return false
 	}
 	af.B.Privaes=base64.StdEncoding.EncodeToString(xpass)
-	af.Name=GetAddress(acc.GkeyA.GetPubKey())
+	af.Name=GetAddress(acc.GkeyA.GetPubKey(),acc.GkeyB.GetPubKey())
 
 	data,_:= json.Marshal(af)
 	if ioutil.WriteFile(path,data,0644)==nil{
@@ -306,13 +310,13 @@ func entry2gkey(aa * AccAes,key []byte) (*GKey,error) {
 	return nil,errors.New("密码错误")
 }
 
-
+/*
 //根据公钥返回地址，用于在区块链中检验当前签名是否是当前地址的签名（签名检查分两步：签名有效性检查，当前签名用户地址和当前资产地址检查）
-func Pubkey2Addr(puk_s string)string{
-	pub_b,_:= hex.DecodeString(puk_s)
-	result:=GetAddress(pub_b)
-	return result
-}
+func ComparePubAddr(pub_b []byte,addr string)bool{
+	_,pubB := GetPubk4Addr(addr)
+	pubB_b := append(pubB.X.Bytes(), pubB.Y.Bytes()...)
+	return bytes.Equal(pub_b,pubB_b)
+}*/
 
 //根据公钥返回地址(仅用于隐私交易下隐藏地址交易转化），用于在区块链中检验当前签名是否是当前地址的签名
 func Shield_Pubkey2Addr(s_puk_s string)string{
