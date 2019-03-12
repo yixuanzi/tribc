@@ -106,7 +106,7 @@ func (k GKey) GetPrivKey() []byte {
 
 //根据公钥对，返回公钥byte
 func (k GKey) GetPubKey() []byte {
-	pubKey := append(k.PublicKey.X.Bytes(), k.PublicKey.Y.Bytes()...)//k.PrivateKey.Y.Bytes()...) // []bytes type
+	pubKey := append(PubkeyPad(k.PublicKey.X.Bytes()), PubkeyPad(k.PublicKey.Y.Bytes())...)//k.PrivateKey.Y.Bytes()...) // []bytes type
 	// s := byteToString(pubKey)
 	return pubKey
 }
@@ -242,6 +242,7 @@ type Accfile struct {
 //保存账号到文件，采用加密方式保存{a:{privhash:hash(acc_a),privaes:aes(acc_a)},b:{privhash:hash(acc_b),privaes:aes(acc_b)}
 func CreateAcc(key []byte) string{
 	randomstr:= GenerateRstring(45)
+	//fmt.Println(randomstr)
 	acc := CreateAccount(randomstr)
 	var af Accfile
 	af.V=version

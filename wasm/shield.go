@@ -21,16 +21,23 @@ func CreateShieldAddr(addr string) ([]byte, []byte ) {
 	A_Y:=pubk.Y
 	B_X:=pubk.X
 	B_Y:=pubk.Y
-	randomkey, _ := ecdsa.GenerateKey(curve, strings.NewReader(GenerateRstring(45)))
+
+	s:=GenerateRstring(45)
+	randomkey, _ := ecdsa.GenerateKey(curve, strings.NewReader(s))
+	//fmt.Println(s)
 
 
 	P, _ := curve.ScalarMult(A_X, A_Y, randomkey.D.Bytes()) //Mr
+	//P.Mod(P,N)
 
 	x, y := curve.ScalarBaseMult(P.Bytes()) //(Mr)G
+	//x.Mod(x,N)
+	//y.Mod(y,N)
 
 	P, _ = curve.Add(x, y, B_X, B_Y) //(Mr)G+N
+	//P.Mod(P,N)
 
-	pubkey := append(randomkey.PublicKey.X.Bytes(),randomkey.PublicKey.Y.Bytes()...)
+	pubkey := append(PubkeyPad(randomkey.PublicKey.X.Bytes()),PubkeyPad(randomkey.PublicKey.Y.Bytes())...)
 	return P.Bytes(),pubkey
 }
 
@@ -40,16 +47,23 @@ func Verify_shield(acc *Account, shieldaddr []byte, shieldpKey []byte) bool {
 	gkeyA := acc.GkeyA
 	gkeyB := acc.GkeyB
 
+
 	P := new(big.Int).SetBytes(shieldaddr)
 
 	R_x := new(big.Int).SetBytes(shieldpKey[:32])
 	R_y := new(big.Int).SetBytes(shieldpKey[32:])
 
 	p, _ := curve.ScalarMult(R_x, R_y, gkeyA.PrivateKey.D.Bytes()) //mR
+	//p.Mod(p,N)
 
 	x, y := curve.ScalarBaseMult(p.Bytes()) //(mR)G
+	//x.Mod(x,N)
+	//y.Mod(y,N)
+
+
 
 	p, _ = curve.Add(x, y, gkeyB.PublicKey.X, gkeyB.PublicKey.Y) //(mR)G+N
+	//p.Mod(p,N)
 
 	if P.Cmp(p) == 0 {
 		return true

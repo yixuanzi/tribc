@@ -31,7 +31,7 @@ func CreateShieldAddr(addr string) ([]byte, []byte ) {
 
 	P, _ = curve.Add(x, y, B_X, B_Y) //(Mr)G+N
 
-	pubkey := append(randomkey.PublicKey.X.Bytes(),randomkey.PublicKey.Y.Bytes()...)
+	pubkey := append(lib.PubkeyPad(randomkey.PublicKey.X.Bytes()),lib.PubkeyPad(randomkey.PublicKey.Y.Bytes())...)
 	return P.Bytes(),pubkey
 }
 

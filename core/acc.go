@@ -108,7 +108,7 @@ func (k GKey) GetPrivKey() []byte {
 
 //根据公钥对，返回公钥byte
 func (k GKey) GetPubKey() []byte {
-	pubKey := append(k.PublicKey.X.Bytes(), k.PublicKey.Y.Bytes()...)//k.PrivateKey.Y.Bytes()...) // []bytes type
+	pubKey := append(PubkeyPad(k.PublicKey.X.Bytes()), PubkeyPad(k.PublicKey.Y.Bytes())...)//k.PrivateKey.Y.Bytes()...) // []bytes type
 	// s := byteToString(pubKey)
 	return pubKey
 }

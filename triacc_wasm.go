@@ -119,7 +119,7 @@ func main() {
 	}
 
 	Verify_shield2 := func(i []js.Value){ //p1:私钥A p2:shieldaddr p3:shieldpkey p4:回调函数，返回判断状态
-		handlerError("Verify_shield")
+		handlerError("Verify_shield2")
 		acc_new := wasm.GetAcc4privA(i[0].String())
 		saddr, _ := hex.DecodeString(i[1].String())
 		spkey, _ := hex.DecodeString(i[2].String())

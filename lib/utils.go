@@ -179,3 +179,10 @@ func GetCurrent(path string)string{
 	current:=strings.Join(plist[:len(plist)-1],"/")
 	return current
 }
+
+//对公钥的byte进行32补全对齐
+func PubkeyPad(pub []byte) []byte {
+	b := make([]byte, 0, 32)
+	pubb := PaddedAppend(32, b, pub) // []bytes type
+	return pubb
+}
