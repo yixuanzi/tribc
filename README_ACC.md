@@ -1,16 +1,16 @@
 # Trias Account Moudel(TAM)
-[![Tag version](https://img.shields.io/badge/Tag-1.7.4-blue.svg)]()
+[![Tag version](https://img.shields.io/badge/Tag-1.7.5-blue.svg)](https://github.com/trias-lab/tribc/tree/SameA)
 [![Go doc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/trias-lab/tribc)
-[![Go version](https://img.shields.io/badge/go-1.11-blue.svg)](www.golang.org)
-[![Lincese](https://img.shields.io/badge/Lincese-GPL3.0-blue.svg)](www.golang.org)
+[![Go version](https://img.shields.io/badge/go-1.11-blue.svg)](https://golang.org/doc/go1.11)
+[![Lincese](https://img.shields.io/badge/Lincese-GPL3.0-blue.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
 
 # Overview
 This project is mainly to provide application-level account services for trias, so that logic can also operate abstract account status through simple interface calls.
 
 |branch|status|test|
 |-------|--------|----|
-|master| latest code and function in this|
-|SameA| TriasV1 working at current branch  |
+|master| latest code and function in this| [![tag](https://img.shields.io/badge/v1.8.0-pass-green.svg)]()
+|SameA| TriasV1 working at current branch  | [![tag](https://img.shields.io/badge/v1.7.5-pass-green.svg)]()
 
 # Main Features
  - support mult-model call from client,it's rpc,wasm and dynamic link library
@@ -95,7 +95,7 @@ To report a security vulnerability,  [bug report](mailto:contact@trias.one)
 # Documentation
 Interface design document  at [Interface design document with TAM.md](doc/Interface%20design%20document%20with%20TAM.md)
 
-Privacy Transaction Design Principle Document at [Privacy transaction with TAM.md](Privacy%20transaction%20with%20TAM.md)
+Privacy Transaction Design Principle Document at [Privacy transaction with TAM.pdf](doc/Privacy%20transaction%20with%20TAM.pdf)
 
 Complete documentation can be found on the [website](https://github.com/trias-lab/Documentation).
 
